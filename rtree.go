@@ -114,6 +114,7 @@ func (tree *Rtree) bulkLoad(objs []Spatial) {
 	entries := make([]entry, n)
 	for i := range objs {
 		entries[i] = entry{
+			id:  uuid.New(),
 			bb:  objs[i].Bounds(),
 			obj: objs[i],
 		}
@@ -159,6 +160,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 				id:    uuid.New(),
 				level: level,
 				entries: []entry{{
+					id:    uuid.New(),
 					bb:    child.computeBoundingBox(),
 					child: child,
 				}},
@@ -203,6 +205,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 			child.parent = n
 
 			n.entries = append(n.entries, entry{
+				id:    uuid.New(),
 				bb:    child.computeBoundingBox(),
 				child: child,
 			})
@@ -226,6 +229,7 @@ func (n *node) String() string {
 
 // entry represents a spatial index record stored in a tree node.
 type entry struct {
+	id    uuid.UUID
 	bb    Rect // bounding-box of all children of this entry
 	child *node
 	obj   Spatial
@@ -251,7 +255,7 @@ type Spatial interface {
 // Implemented per Section 3.2 of "R-trees: A Dynamic Index Structure for
 // Spatial Searching" by A. Guttman, Proceedings of ACM SIGMOD, p. 47-57, 1984.
 func (tree *Rtree) Insert(obj Spatial) {
-	e := entry{obj.Bounds(), nil, obj}
+	e := entry{uuid.New(), obj.Bounds(), nil, obj}
 	tree.insert(e, 1)
 	tree.size++
 }
@@ -280,8 +284,8 @@ func (tree *Rtree) insert(e entry, level int) {
 			parent: nil,
 			level:  tree.height,
 			entries: []entry{
-				{bb: oldRoot.computeBoundingBox(), child: oldRoot},
-				{bb: splitRoot.computeBoundingBox(), child: splitRoot},
+				{id: uuid.New(), bb: oldRoot.computeBoundingBox(), child: oldRoot},
+				{id: uuid.New(), bb: splitRoot.computeBoundingBox(), child: splitRoot},
 			},
 		}
 		oldRoot.parent = tree.root
@@ -328,7 +332,7 @@ func (tree *Rtree) adjustTree(n, nn *node) (*node, *node) {
 
 	// Otherwise, these are two nodes resulting from a split.
 	// n was reused as the "left" node, but we need to add nn to n.parent.
-	enn := entry{nn.computeBoundingBox(), nn, nil}
+	enn := entry{uuid.New(), nn.computeBoundingBox(), nn, nil}
 	n.parent.entries = append(n.parent.entries, enn)
 
 	// If the new entry overflows the parent, split the parent and propagate.
@@ -607,7 +611,7 @@ func (tree *Rtree) condenseTree(n *node) {
 	for i := len(deleted) - 1; i >= 0; i-- {
 		n := deleted[i]
 		// reinsert entry so that it will remain at the same level as before
-		e := entry{n.computeBoundingBox(), n, nil}
+		e := entry{uuid.New(), n.computeBoundingBox(), n, nil}
 		tree.insert(e, n.level+1)
 	}
 }
