@@ -7,6 +7,7 @@ package rtreego
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"math"
 	"sort"
 )
@@ -40,6 +41,7 @@ func NewTree(dim, min, max int, objs ...Spatial) *Rtree {
 		MaxChildren: max,
 		height:      1,
 		root: &node{
+			id:      uuid.New(),
 			entries: []entry{},
 			leaf:    true,
 			level:   1,
@@ -154,6 +156,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 		if level > 1 {
 			child := tree.omt(level-1, nSlices, objs, m)
 			n := &node{
+				id:    uuid.New(),
 				level: level,
 				entries: []entry{{
 					bb:    child.computeBoundingBox(),
@@ -166,6 +169,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 		entries := make([]entry, len(objs))
 		copy(entries, objs)
 		return &node{
+			id:      uuid.New(),
 			leaf:    true,
 			entries: entries,
 			level:   level,
@@ -173,6 +177,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 	}
 
 	n := &node{
+		id:      uuid.New(),
 		level:   level,
 		entries: make([]entry, 0, m),
 	}
@@ -208,6 +213,7 @@ func (tree *Rtree) omt(level, nSlices int, objs []entry, m int) *node {
 
 // node represents a tree node of an Rtree.
 type node struct {
+	id      uuid.UUID
 	parent  *node
 	leaf    bool
 	entries []entry
@@ -270,6 +276,7 @@ func (tree *Rtree) insert(e entry, level int) {
 		oldRoot := root
 		tree.height++
 		tree.root = &node{
+			id:     uuid.New(),
 			parent: nil,
 			level:  tree.height,
 			entries: []entry{
@@ -374,6 +381,7 @@ func (n *node) split(minGroupSize int) (left, right *node) {
 	left = n
 	left.entries = []entry{leftSeed}
 	right = &node{
+		id:      uuid.New(),
 		parent:  n.parent,
 		leaf:    n.leaf,
 		level:   n.level,
